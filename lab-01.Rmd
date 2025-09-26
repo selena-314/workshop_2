@@ -136,9 +136,9 @@ visitors %>%
 _How many regions have more than 50 tourist attraction in the data set? (Hint: You will need to tabulate the data before filtering.)_
 
 ```{r Ex_g}
-#visitors %>% 
-#  arrange(desc(region)) %>%
-#  filter(attraction > 50)
+visitors %>% 
+  count(region) %>%
+  filter(n > 50)
 ```
 
 # Summarising Data
@@ -163,25 +163,24 @@ _Perform the same calculation for the 2021 admissions data._
 ```{r Ex_h}
 visitors %>% 
   summarise(
-    mean_2021 = mean(n_2021),
-    med_2021 = median(n_2021)
+    mean_2021 = mean(n_2021, na.rm = TRUE),
+    med_2021 = median(n_2021, na.rm = TRUE),
   )
 ```
 
-All values in the output are `NA`!
+All values in the output are `NA`! (unless na.rm parameter is used)
 
 ### Exercise i.
 
 _What does `NA` stand for and why are you getting this as your answer to the previous question._
 
-**Write your answer here**
-
+NA appears where an empty field is present (data is missing from the table). The NA seems to appear as a result because there are empty fields in the n_2021 column, meaning that the mean and median calculations couldn't be performed.
 
 ### Exercise j.
 
 _Look at the help pages for the `mean()` and `median()` commands to see what the input argument `na.rm` does. Edit your code from exercise h so that it computes the summary statistics where data is available._
 
-**Write your answer here**
+The na.rm parameter ensures that the NA values in the table are being ignored, so that an accurate calculaion can still take place. 
 
 ## Question 7
 
@@ -200,10 +199,7 @@ visitors %>%
 
 _Observe in question 6 that the mean statistics across all settings are much larger than the corresponding median statistics. Discuss in your group what this suggests about the data._
 
-**Write your answer here**
-
-
-
+This suggests that the data on the number of visitors in 2022 across all attractions is positively skewed. That means that there are a few attractions that have a very high number of visitors, which affects the overall mean, but not the median (middle) value.
 
 ## Question 8
 
@@ -233,8 +229,16 @@ _How many tourist attractions are there in each of the 4 nations? From this, dis
 
 
 ```{r Ex_l}
-#________ %>%
-#  ______(_______)
+visitors %>%
+  mutate(
+    nation = case_when(
+      region == "Northern Ireland" ~ "Northern Ireland",
+      region == "Scotland" ~ "Scotland",
+      region == "Wales" ~ "Wales",
+      TRUE ~ "England"
+    )
+  ) %>%
+  count(nation)
 ```
 
 
@@ -246,9 +250,21 @@ _How many tourist attractions are there in each of the 4 nations? From this, dis
 _Within each of the 4 nations, what is the proportion of tourist attractions that have free admission for all visitors?_
 
 ```{r Ex_m}
-# Write your code here
-
-
+visitors %>%
+  mutate(
+    nation = case_when(
+      region == "Northern Ireland" ~ "Northern Ireland",
+      region == "Scotland" ~ "Scotland",
+      region == "Wales" ~ "Wales",
+      TRUE ~ "England"
+    )
+  ) %>%
+  group_by(nation) %>%
+  summarise(
+    total = n(),
+    free = sum(admission == "Free", na.rm = TRUE),
+    proportion_free = free / total
+  )
 ```
 
 
@@ -257,8 +273,15 @@ _Within each of the 4 nations, what is the proportion of tourist attractions tha
 _Calculate the percentage change in visitor admissions from 2021 to 2022. Of the tourist attractions in Scotland, sort into increasing numerical order the types of admission charges based on the mean percentage change in visitor numbers._
 
 ```{r Ex_n}
-# Write your code here
-
-
+visitors %>%
+  mutate(
+    p_change = ((n_2022 - n_2021) / n_2021) * 100
+  ) %>%
+  filter(region == "Scotland") %>%
+  group_by(admission) %>%
+  summarise(
+    mean_percentage_change = mean(p_change, na.rm = TRUE)
+  ) %>%
+    arrange(mean_percentage_change)
 
 ```
